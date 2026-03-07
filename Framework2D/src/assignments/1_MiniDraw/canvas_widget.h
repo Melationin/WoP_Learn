@@ -6,7 +6,12 @@
 #include <vector>
 
 #include "shapes/shape.h"
+#include "shapeType.h"
+#include "tools/selector.h"
+#include "tools/shape_creater.h"
 #include "common/widget.h"
+
+
 
 namespace USTC_CG
 {
@@ -22,19 +27,16 @@ class Canvas : public Widget
     void draw() override;
 
     // Enumeration for supported shape types.
-    enum ShapeType
-    {
-        kDefault = 0,
-        kLine = 1,
-        kRect = 2,
-        kEllipse = 3,
-        kPolygon = 4,
-    };
+
 
     // Shape type setters.
     void set_default();
     void set_line();
     void set_rect();
+    void set_ellipse();
+    void set_polygon();
+    void set_freehand();
+    void set_selector();
     // HW1_TODO: more shape types.
 
     // Clears all shapes from the canvas.
@@ -46,15 +48,29 @@ class Canvas : public Widget
     // Controls the visibility of the canvas background.
     void show_background(bool flag);
 
-   private:
+
+    void set_line_color(const ImVec4& color);
+
+    void set_line_thickness(float thickness);
+
+    void set_fill_mode(bool fill_shape);
+
+    void set_fill_color(const ImVec4 &color);
+
+
+private:
     // Drawing functions.
     void draw_background();
     void draw_shapes();
 
     // Event handlers for mouse interactions.
     void mouse_click_event();
+    void mouse_right_click_event();
+
     void mouse_move_event();
     void mouse_release_event();
+
+    void mouse_scroll_event();
 
     // Calculates mouse's relative position in the canvas.
     ImVec2 mouse_pos_in_canvas() const;
@@ -63,11 +79,13 @@ class Canvas : public Widget
     ImVec2 canvas_min_;         // Top-left corner of the canvas.
     ImVec2 canvas_max_;         // Bottom-right corner of the canvas.
     ImVec2 canvas_size_;        // Size of the canvas.
-    bool draw_status_ = false;  // Is the canvas currently being drawn on.
 
     ImVec2 canvas_minimal_size_ = ImVec2(50.f, 50.f);
     ImU32 background_color_ = IM_COL32(50, 50, 50, 255);
     ImU32 border_color_ = IM_COL32(255, 255, 255, 255);
+
+    Shape::Config current_config_;
+
     bool show_background_ = true;  // Controls background visibility.
 
     // Mouse interaction status.
@@ -75,11 +93,17 @@ class Canvas : public Widget
 
     // Current shape being drawn.
     ShapeType shape_type_;
-    ImVec2 start_point_, end_point_;
-    std::shared_ptr<Shape> current_shape_;
+
+
+    std::unique_ptr<Tool> current_tool_;
 
     // List of shapes drawn on the canvas.
     std::vector<std::shared_ptr<Shape>> shape_list_;
+
+
+//frined class
+    friend Selector;
+    friend ShapeCreator;
 };
 
 }  // namespace USTC_CG

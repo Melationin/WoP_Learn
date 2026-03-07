@@ -26,11 +26,15 @@ class Rect : public Shape
 
     // Draws the rectangle on the screen
     // Overrides draw function to implement rectangle-specific drawing logic
-    void draw(const Config& config) const override;
+    void draw_stroke(const Config& config) const override;
+
+    void draw_fill(const Config &config) const override;
 
     // Overrides Shape's update function to adjust the rectangle size during
     // interaction
     void update(float x, float y) override;
+
+    bool selected(ImVec2 point,bool can_selected_inner = false) const override;
 
    private:
     // Coordinates of the top-left and bottom-right corners of the rectangle

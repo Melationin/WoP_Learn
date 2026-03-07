@@ -25,11 +25,13 @@ class Line : public Shape
     virtual ~Line() = default;
 
     // Overrides draw function to implement line-specific drawing logic
-    void draw(const Config& config) const override;
+    void draw_stroke(const Config& config) const override;
 
     // Overrides Shape's update function to adjust the end point during
     // interaction
     void update(float x, float y) override;
+
+    bool selected(ImVec2 mouse_p, bool can_selected_inner) const override;
 
    private:
     float start_point_x_, start_point_y_, end_point_x_, end_point_y_;

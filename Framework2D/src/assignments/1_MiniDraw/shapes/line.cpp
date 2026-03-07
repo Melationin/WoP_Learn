@@ -5,7 +5,7 @@
 namespace USTC_CG
 {
 // Draw the line using ImGui
-void Line::draw(const Config& config) const
+void Line::draw_stroke(const Config& config) const
 {
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
 

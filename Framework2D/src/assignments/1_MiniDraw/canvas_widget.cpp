@@ -2,19 +2,26 @@
 
 #include <cmath>
 #include <iostream>
+#include <memory>
 
 #include "imgui.h"
 #include "shapes/line.h"
 #include "shapes/rect.h"
+#include "shapes/ellipse.h"
+#include "shapes/polygon.h"
+#include "shapes/freehand.h"
 
-namespace USTC_CG
-{
+namespace USTC_CG {
 void Canvas::draw()
 {
     draw_background();
     // HW1_TODO: more interaction events
     if (is_hovered_ && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
         mouse_click_event();
+    if (is_hovered_ && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+        mouse_right_click_event();
+    if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
+        mouse_release_event();
     mouse_move_event();
     if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
         mouse_release_event();
@@ -22,13 +29,13 @@ void Canvas::draw()
     draw_shapes();
 }
 
-void Canvas::set_attributes(const ImVec2& min, const ImVec2& size)
+void Canvas::set_attributes(const ImVec2 &min, const ImVec2 &size)
 {
     canvas_min_ = min;
     canvas_size_ = size;
     canvas_minimal_size_ = size;
     canvas_max_ =
-        ImVec2(canvas_min_.x + canvas_size_.x, canvas_min_.y + canvas_size_.y);
+            ImVec2(canvas_min_.x + canvas_size_.x, canvas_min_.y + canvas_size_.y);
 }
 
 void Canvas::show_background(bool flag)
@@ -36,22 +43,65 @@ void Canvas::show_background(bool flag)
     show_background_ = flag;
 }
 
+void Canvas::set_line_color(const ImVec4 &color)
+{
+    current_config_.line_color[0] = static_cast<unsigned char>(color.x * 255);
+    current_config_.line_color[1] = static_cast<unsigned char>(color.y * 255);
+    current_config_.line_color[2] = static_cast<unsigned char>(color.z * 255);
+    current_config_.line_color[3] = static_cast<unsigned char>(color.w * 255);
+}
+
+void Canvas::set_line_thickness(float thickness)
+{
+    current_config_.line_thickness = thickness;
+}
+
+void Canvas::set_fill_mode(bool fill_shape)
+{
+    current_config_.fill_shape = fill_shape;
+}
+
+void Canvas::set_fill_color(const ImVec4 &color)
+{
+    current_config_.fill_color[0] = static_cast<unsigned char>(color.x * 255);
+    current_config_.fill_color[1] = static_cast<unsigned char>(color.y * 255);
+    current_config_.fill_color[2] = static_cast<unsigned char>(color.z * 255);
+    current_config_.fill_color[3] = static_cast<unsigned char>(color.w * 255);
+}
+
 void Canvas::set_default()
 {
-    draw_status_ = false;
-    shape_type_ = kDefault;
+    current_tool_.reset();
 }
 
 void Canvas::set_line()
 {
-    draw_status_ = false;
-    shape_type_ = kLine;
+    current_tool_ = std::make_unique<ShapeCreator>(this,kLine);
 }
 
 void Canvas::set_rect()
 {
-    draw_status_ = false;
-    shape_type_ = kRect;
+    current_tool_ = std::make_unique<ShapeCreator>(this,kRect);
+}
+
+void Canvas::set_ellipse()
+{
+    current_tool_ = std::make_unique<ShapeCreator>(this,kEllipse);
+}
+
+void Canvas::set_polygon()
+{
+    current_tool_ = std::make_unique<ShapeCreator>(this,kPolygon);
+}
+
+void Canvas::set_freehand()
+{
+    current_tool_ = std::make_unique<ShapeCreator>(this,kFreehand);
+}
+
+void Canvas::set_selector()
+{
+    current_tool_ = std::make_unique<Selector>(this->shape_list_);
 }
 
 // HW1_TODO: more shape types, implements
@@ -63,7 +113,7 @@ void Canvas::clear_shape_list()
 
 void Canvas::draw_background()
 {
-    ImDrawList* draw_list = ImGui::GetWindowDrawList();
+    ImDrawList *draw_list = ImGui::GetWindowDrawList();
     if (show_background_)
     {
         // Draw background recrangle
@@ -82,18 +132,18 @@ void Canvas::draw_background()
 
 void Canvas::draw_shapes()
 {
-    Shape::Config s = { .bias = { canvas_min_.x, canvas_min_.y } };
-    ImDrawList* draw_list = ImGui::GetWindowDrawList();
+    ImDrawList *draw_list = ImGui::GetWindowDrawList();
 
     // ClipRect can hide the drawing content outside of the rectangular area
     draw_list->PushClipRect(canvas_min_, canvas_max_, true);
-    for (const auto& shape : shape_list_)
+    for (const auto &shape: shape_list_)
     {
-        shape->draw(s);
+        shape->draw(canvas_min_.x, canvas_min_.y);
     }
-    if (draw_status_ && current_shape_)
+
+    if (current_tool_)
     {
-        current_shape_->draw(s);
+        current_tool_->display(canvas_min_.x, canvas_min_.y);
     }
     draw_list->PopClipRect();
 }
@@ -101,66 +151,46 @@ void Canvas::draw_shapes()
 void Canvas::mouse_click_event()
 {
     // HW1_TODO: Drawing rule for more primitives
-    if (!draw_status_)
+    if (current_tool_)
     {
-        draw_status_ = true;
-        start_point_ = end_point_ = mouse_pos_in_canvas();
-        switch (shape_type_)
-        {
-            case USTC_CG::Canvas::kDefault:
-            {
-                break;
-            }
-            case USTC_CG::Canvas::kLine:
-            {
-                current_shape_ = std::make_shared<Line>(
-                    start_point_.x, start_point_.y, end_point_.x, end_point_.y);
-                break;
-            }
-            case USTC_CG::Canvas::kRect:
-            {
-                current_shape_ = std::make_shared<Rect>(
-                    start_point_.x, start_point_.y, end_point_.x, end_point_.y);
-                break;
-            }
-            // HW1_TODO: case USTC_CG::Canvas::kEllipse:
-            default: break;
-        }
+        auto [x,y] = mouse_pos_in_canvas();
+        current_tool_->on_mouse_left_click(x,y);
     }
-    else
+}
+
+void Canvas::mouse_right_click_event()
+{
+    if (current_tool_)
     {
-        draw_status_ = false;
-        if (current_shape_)
-        {
-            shape_list_.push_back(current_shape_);
-            current_shape_.reset();
-        }
+        auto [x,y] = mouse_pos_in_canvas();
+        current_tool_->on_mouse_right_click(x,y);
     }
 }
 
 void Canvas::mouse_move_event()
 {
     // HW1_TODO: Drawing rule for more primitives
-    if (draw_status_)
+    if (current_tool_)
     {
-        end_point_ = mouse_pos_in_canvas();
-        if (current_shape_)
-        {
-            current_shape_->update(end_point_.x, end_point_.y);
-        }
+        auto [x,y] = mouse_pos_in_canvas();
+        current_tool_->on_mouse_move(x,y);
     }
 }
 
 void Canvas::mouse_release_event()
 {
-    // HW1_TODO: Drawing rule for more primitives
+    if (current_tool_)
+    {
+        auto [x,y] = mouse_pos_in_canvas();
+        current_tool_->on_mouse_left_release(x,y);
+    }
 }
 
 ImVec2 Canvas::mouse_pos_in_canvas() const
 {
-    ImGuiIO& io = ImGui::GetIO();
+    ImGuiIO &io = ImGui::GetIO();
     const ImVec2 mouse_pos_in_canvas(
         io.MousePos.x - canvas_min_.x, io.MousePos.y - canvas_min_.y);
     return mouse_pos_in_canvas;
 }
-}  // namespace USTC_CG
+} // namespace USTC_CG
