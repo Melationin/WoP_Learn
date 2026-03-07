@@ -15,7 +15,37 @@ enum ShapeType
     kPolygon = 4,
     kFreehand = 5,
     kShape ,
-    kSelector
+    kSelector,
+    kShapeConfigSetter,
+    kShapeMover,
+
 };
+
+inline bool isShape(ShapeType type)
+{
+    switch (type)
+    {
+        case kLine:
+        case kRect:
+        case kEllipse:
+        case kPolygon:
+        case kFreehand:
+            return true;
+        default:
+            return false;
+    }
+}
+
+inline bool isSelector(ShapeType type)
+{
+    switch (type)
+    {
+        case kSelector:
+        case kShapeConfigSetter:
+            return true;
+        default:
+            return false;
+    }
+}
 }
 #endif //USTC_CG_2025_FRAMEWORK2D_SHAPETYPE_H

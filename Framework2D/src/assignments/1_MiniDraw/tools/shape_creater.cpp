@@ -11,9 +11,10 @@
 #include "shapes/polygon.h"
 
 namespace USTC_CG {
-ShapeCreator::ShapeCreator(Canvas *canvas, ShapeType type) : shapes_(canvas->shape_list_),type_(type)
+ShapeCreator::ShapeCreator(Canvas *canvas, ShapeType type) : shapes_(canvas->shape_list_)
 {
     this->canvas_ = canvas;
+    this->type_ = type;
 }
 
 void ShapeCreator::display(float offset_x, float offset_y) const
@@ -30,7 +31,8 @@ void ShapeCreator::on_mouse_right_click(float x, float y)
     {
         if (type_ == kPolygon )
         {
-            current_shape_->add_control_point(start_point_.x,start_point_.y);
+
+            current_shape_->update(start_point_.x,start_point_.y);
             shapes_.push_back(current_shape_);
             current_shape_.reset();
             draw_status_ = false;
@@ -93,6 +95,8 @@ void ShapeCreator::on_mouse_left_click(float x, float y)
             case kPolygon:
                 current_shape_ = std::make_shared<Polygon>(x, y);
                 break;
+            default:
+                return;
         }
         current_shape_->setConfig(canvas_->current_config_);
     }

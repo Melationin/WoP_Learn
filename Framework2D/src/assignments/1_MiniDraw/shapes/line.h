@@ -2,13 +2,9 @@
 
 #include "shape.h"
 
-namespace USTC_CG
-{
-class Line : public Shape
-{
-   public:
-    Line() = default;
-
+namespace USTC_CG {
+class Line : public Shape {
+public:
     // Constructor to initialize a line with start and end coordinates
     Line(
         float start_point_x,
@@ -22,10 +18,10 @@ class Line : public Shape
     {
     }
 
-    virtual ~Line() = default;
+    ~Line() override = default;
 
     // Overrides draw function to implement line-specific drawing logic
-    void draw_stroke(const Config& config) const override;
+    void draw_stroke(const Config &config) const override;
 
     // Overrides Shape's update function to adjust the end point during
     // interaction
@@ -33,7 +29,11 @@ class Line : public Shape
 
     bool selected(ImVec2 mouse_p, bool can_selected_inner) const override;
 
-   private:
+    static bool is_point_near_line(float px, float py, float x1, float y1, float x2, float y2, float threshold);
+
+    void move(float x, float y) override;
+
+private:
     float start_point_x_, start_point_y_, end_point_x_, end_point_y_;
 };
-}  // namespace USTC_CG
+} // namespace USTC_CG

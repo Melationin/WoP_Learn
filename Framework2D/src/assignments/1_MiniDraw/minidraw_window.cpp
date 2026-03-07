@@ -9,9 +9,7 @@ MiniDraw::MiniDraw(const std::string& window_name) : Window(window_name)
     p_canvas_ = std::make_shared<Canvas>("Widget.Canvas");
 }
 
-MiniDraw::~MiniDraw()
-{
-}
+MiniDraw::~MiniDraw() = default;
 
 void MiniDraw::draw()
 {
@@ -40,6 +38,26 @@ void MiniDraw::draw_canvas()
         {
             p_canvas_->set_selector();
         }
+
+        if (p_canvas_->hasShapeSelected())
+        {
+            ImGui::SameLine();
+            if (ImGui::Button("Shape Setter"))
+            {
+                p_canvas_->set_shape_setter();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Shape Mover"))
+            {
+                p_canvas_->set_shape_mover();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Remove Selected"))
+            {
+                p_canvas_->remove_selected();
+            }
+        }
+
         if (ImGui::Button("Line"))
         {
             std::cout << "Set shape to Line" << std::endl;
@@ -83,11 +101,8 @@ void MiniDraw::draw_canvas()
         ImGui::Text("Line Color");
         ImGui::SameLine();
 
-
-
         ImGui::SetNextItemWidth(300);
         ImGui::SliderFloat("Line Thickness  ", &line_thickness, 0.01, 10.0);
-
 
         ImGui::SameLine();
         ImGui::Checkbox("Fill Shape", &fill_shape);

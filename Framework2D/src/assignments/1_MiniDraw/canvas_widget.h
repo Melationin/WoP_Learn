@@ -37,6 +37,9 @@ class Canvas : public Widget
     void set_polygon();
     void set_freehand();
     void set_selector();
+    void set_shape_setter();
+    void set_shape_mover();
+    void remove_selected();
     // HW1_TODO: more shape types.
 
     // Clears all shapes from the canvas.
@@ -48,7 +51,6 @@ class Canvas : public Widget
     // Controls the visibility of the canvas background.
     void show_background(bool flag);
 
-
     void set_line_color(const ImVec4& color);
 
     void set_line_thickness(float thickness);
@@ -57,6 +59,8 @@ class Canvas : public Widget
 
     void set_fill_color(const ImVec4 &color);
 
+    bool hasShapeSelected() const;
+    Shape::Config getCurrent_config_() const{return current_config_;}
 
 private:
     // Drawing functions.
@@ -69,8 +73,6 @@ private:
 
     void mouse_move_event();
     void mouse_release_event();
-
-    void mouse_scroll_event();
 
     // Calculates mouse's relative position in the canvas.
     ImVec2 mouse_pos_in_canvas() const;
@@ -101,7 +103,7 @@ private:
     std::vector<std::shared_ptr<Shape>> shape_list_;
 
 
-//frined class
+//friend class
     friend Selector;
     friend ShapeCreator;
 };

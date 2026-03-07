@@ -39,7 +39,7 @@ private:
 
     ImVec2 start_point_, end_point_;
     bool draw_status_ = false;
-    ShapeType type_ = kDefault;
+
 
 
     Canvas* canvas_ ;

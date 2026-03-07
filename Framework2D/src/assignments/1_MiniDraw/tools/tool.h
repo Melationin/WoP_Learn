@@ -35,9 +35,10 @@ public:
 
     void virtual on_mouse_scroll(float delta)
     {};
+    void virtual update()
+    {};
 
-
-
+    ShapeType type_ = kDefault;
 };
 }
 

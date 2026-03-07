@@ -10,8 +10,6 @@
 #include <shapes/shape.h>
 #include <memory>
 
-#include "imgui.h"
-
 namespace USTC_CG {
 
 //工具类最重要的模块：选择工具
@@ -20,37 +18,38 @@ class Selector :public Tool {
 
 public:
 
-    explicit Selector(const std::vector<std::shared_ptr<Shape>>& shapes) : Tool(), shapes_(shapes)
+    explicit Selector(const std::vector<std::shared_ptr<Shape>>& shapes,ShapeType type = kSelector)
+    : Tool(), shapes_(shapes)
     {
+        this->type_ = type;
     }
+
 
     void on_mouse_left_click(float x, float y) override;
 
-    void on_mouse_left_release(float x, float y) override;
+    void on_mouse_right_click(float x, float y) override;
 
     void on_mouse_move(float x, float y) override;
 
     void display(float offset_x, float offset_y) const override;
 
+    int get_selected_shapes_count()const{return selected_shapes_.size();}
+
+    std::vector<std::weak_ptr<USTC_CG::Shape>> get_selected_shapes()const{return selected_shapes_;}
+
+    //必须要清理掉失效的图形指针
+    void update() override;
+
+protected:
+    std::vector<std::weak_ptr<USTC_CG::Shape>> selected_shapes_;
+    const std::vector<std::shared_ptr<Shape>>& shapes_;
 private:
     //选中的图形
-    std::vector<std::weak_ptr<USTC_CG::Shape>> selected_shapes_;
-
     //预选中的图像
     std::vector<std::weak_ptr<USTC_CG::Shape>> selecting_shapes_;
 
-
     //单选模式，在预选图形中的编号
     int selecting_shapes_index_ = 0;
-
-    ImVec2 begin_point_;
-
-    ImVec2 end_point_;
-
-    //来自Canvas的图像列表。创建时需要
-    const std::vector<std::shared_ptr<Shape>>& shapes_;
-
-
 
 };
 }

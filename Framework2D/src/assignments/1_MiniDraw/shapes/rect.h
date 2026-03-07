@@ -2,11 +2,9 @@
 
 #include "shape.h"
 
-namespace USTC_CG
-{
-class Rect : public Shape
-{
-   public:
+namespace USTC_CG {
+class Rect : public Shape {
+public:
     Rect() = default;
 
     // Initialize a rectangle with start and end points
@@ -22,11 +20,11 @@ class Rect : public Shape
     {
     }
 
-    virtual ~Rect() = default;
+    ~Rect() override = default;
 
     // Draws the rectangle on the screen
     // Overrides draw function to implement rectangle-specific drawing logic
-    void draw_stroke(const Config& config) const override;
+    void draw_stroke(const Config &config) const override;
 
     void draw_fill(const Config &config) const override;
 
@@ -34,11 +32,13 @@ class Rect : public Shape
     // interaction
     void update(float x, float y) override;
 
-    bool selected(ImVec2 point,bool can_selected_inner = false) const override;
+    bool selected(ImVec2 point, bool can_selected_inner) const override;
 
-   private:
+    void move(float x, float y) override;
+
+private:
     // Coordinates of the top-left and bottom-right corners of the rectangle
     float start_point_x_ = 0.0f, start_point_y_ = 0.0f;
     float end_point_x_ = 0.0f, end_point_y_ = 0.0f;
 };
-}  // namespace USTC_CG
+} // namespace USTC_CG

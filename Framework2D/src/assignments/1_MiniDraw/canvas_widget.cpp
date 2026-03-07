@@ -1,15 +1,12 @@
 #include "canvas_widget.h"
+#include "tools/shape_mover.h"
+#include "tools/shape_setter.h"
 
 #include <cmath>
 #include <iostream>
 #include <memory>
-
 #include "imgui.h"
-#include "shapes/line.h"
-#include "shapes/rect.h"
-#include "shapes/ellipse.h"
-#include "shapes/polygon.h"
-#include "shapes/freehand.h"
+
 
 namespace USTC_CG {
 void Canvas::draw()
@@ -23,8 +20,7 @@ void Canvas::draw()
     if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
         mouse_release_event();
     mouse_move_event();
-    if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
-        mouse_release_event();
+    if (current_tool_)    current_tool_->update();
 
     draw_shapes();
 }
@@ -69,6 +65,18 @@ void Canvas::set_fill_color(const ImVec4 &color)
     current_config_.fill_color[3] = static_cast<unsigned char>(color.w * 255);
 }
 
+bool Canvas::hasShapeSelected() const
+{
+    if (!current_tool_)return false;
+    if (!isSelector(current_tool_->type_)) return false;
+    auto* selector = dynamic_cast<Selector*>(current_tool_.get());
+    if (selector->get_selected_shapes_count() >0 )
+    {
+        return true;
+    }
+    return false;
+}
+
 void Canvas::set_default()
 {
     current_tool_.reset();
@@ -104,6 +112,53 @@ void Canvas::set_selector()
     current_tool_ = std::make_unique<Selector>(this->shape_list_);
 }
 
+void Canvas::set_shape_setter()
+{
+    if (current_tool_)
+    {
+        if (isSelector(current_tool_->type_))
+        {
+            auto* temp = dynamic_cast<Selector*>(&(*current_tool_));
+            auto* setter = new ShapeSetter(*temp,current_config_);
+            current_tool_.reset(setter);
+        }
+    }
+
+}
+
+void Canvas::set_shape_mover()
+{
+    if (current_tool_)
+    {
+        if (isSelector(current_tool_->type_))
+        {
+            auto* temp = dynamic_cast<Selector*>(&(*current_tool_));
+            auto* setter = new ShapeMover(*temp);
+            current_tool_.reset(setter);
+        }
+    }
+}
+
+void Canvas::remove_selected()
+{
+    if (current_tool_)
+    {
+        if (isSelector(current_tool_->type_))
+        {
+            auto* temp = dynamic_cast<Selector*>(&(*current_tool_));
+            auto selected_shapes = temp->get_selected_shapes();
+            for (auto &weak_shape_ptr: selected_shapes)
+            {
+                if (auto shape_ptr = weak_shape_ptr.lock())
+                {
+                    shape_ptr->removed();
+                }
+            }
+        }
+    }
+}
+
+
 // HW1_TODO: more shape types, implements
 
 void Canvas::clear_shape_list()
@@ -133,6 +188,9 @@ void Canvas::draw_background()
 void Canvas::draw_shapes()
 {
     ImDrawList *draw_list = ImGui::GetWindowDrawList();
+
+    //删除被绘制的
+    std::erase_if(shape_list_, [](const auto &shape_ptr) { return shape_ptr->isRemoved(); });
 
     // ClipRect can hide the drawing content outside of the rectangular area
     draw_list->PushClipRect(canvas_min_, canvas_max_, true);

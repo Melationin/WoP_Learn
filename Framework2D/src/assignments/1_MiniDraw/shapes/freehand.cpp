@@ -3,7 +3,7 @@
 //
 
 #include "freehand.h"
-
+#include "line.h"
 namespace USTC_CG {
     void Freehand::draw_stroke(const Config &config) const
     {
@@ -36,5 +36,31 @@ namespace USTC_CG {
     void Freehand::add_control_point(float x, float y)
     {
 
+    }
+
+    bool Freehand::selected(ImVec2 mouse_p, bool can_selected_inner) const
+    {
+        static auto is_near_line = Line::is_point_near_line;
+
+        for (int i = 0;i<points_list_.size();i++)
+        {
+            auto [x1,y1] = points_list_[i];
+            auto [x2,y2] = points_list_[(i+1)%points_list_.size()];
+
+            if (is_near_line(mouse_p.x, mouse_p.y, x1, y1, x2, y2, SELECTION_RADIUS))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void Freehand::move(float x, float y)
+    {
+        for (auto &it: points_list_)
+        {
+            it.x += x;
+            it.y += y;
+        }
     }
 } // USTC_GC
