@@ -105,7 +105,10 @@ class Image
     {
         if (x < 0 || x >= width_ || y < 0 || y >= height_)
         {
-            throw std::out_of_range("Pixel coordinates out of bounds");
+            if (x < 0) x= 0;
+            if (x >= width_) x = width_ - 1;
+            if (y < 0) y = 0;
+            if (y >= height_) y = height_ - 1;
         }
         std::vector<unsigned char> pixelValues(channels_);
         std::size_t index =
