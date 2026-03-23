@@ -55,12 +55,24 @@ struct Sphere {
         auto [a,b] = fourier_coefficients[0] ;
         double x = a*r2_pow;
         r2_pow *= r2;
-        for (int i = 1;i<L+1;i++)
+        if (b == -1)
         {
-            auto [a,b] = fourier_coefficients[i];
-            x +=  2 * (a * std::cos(i*theta) + b * std::sin(i*theta)) * r2_pow ;
-            r2_pow *= r2;
-           // std::cout<<"x = "<<x<<"\n";
+            for (int i = 1;i<L+1;i++)
+            {
+                auto [a,b] = fourier_coefficients[i];
+                x +=  2 * (a * std::cos(i*theta) + b * std::sin(i*theta)) * r2_pow ;
+                r2_pow *= r2;
+                // std::cout<<"x = "<<x<<"\n";
+            }
+        }else
+        {
+            for (int i = 1;i<L+1;i++)
+            {
+                auto [a,b] = fourier_coefficients[i];
+                x +=  2 * (a * std::cos(i*theta) + b * std::sin(i*theta)) * r2_pow ;
+                r2_pow *= r2;
+                // std::cout<<"x = "<<x<<"\n";
+            }
         }
         return  x;
     }
@@ -129,9 +141,9 @@ protected:
     }
 
     //表示每个球边界上要采样多少个点，N_i = lambda * r_i^(d-1) 上取整
-    double lambda = 50;
+    double lambda = 5000;
 
-    int N_min = 32;
+    int N_min = 12;
 
     int N(double r)
     {

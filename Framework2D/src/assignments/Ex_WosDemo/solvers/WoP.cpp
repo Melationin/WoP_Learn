@@ -10,6 +10,7 @@ void WoP_solver::precompute(std::vector<std::pair<double, double>> poi)
     computeProbes(std::move(poi));
 
 
+
     std::cout<<"finish1";
     for (int i = 0;i<spheres_.size();i++)
     {
@@ -24,9 +25,10 @@ void WoP_solver::precompute(std::vector<std::pair<double, double>> poi)
             walkData.walked_spheres.emplace_back(i,theta,1/(2*pi));
             //暂时不做源项的
             double solution = 0;
-            bool fallback = false;
-            while (true)
+            int n = 0;
+            while ( n<1000)
             {
+                n++;
                 auto [bx,by] = shape->distance_to_boundary(walkData.x,walkData.y);
                 double r = (bx - walkData.x)*(bx-walkData.x) + (by - walkData.y)*(by - walkData.y);
                 if (r < epsilon_*epsilon_)
@@ -73,20 +75,32 @@ void WoP_solver::precompute(std::vector<std::pair<double, double>> poi)
             }
             //std::cout<<"finish1.2";
             //std::cout<<"finish walk "<<walkData.walked_spheres.size()<<"\n";
+            //sphere.n++;
+            if (n<1000)
             for (auto [index,theta2,pdf]: walkData.walked_spheres)
             {
 
                 auto& sp = spheres_[index];
                 const double w = 1.0 / (2*pi* pdf);
+                //std::cout<<"w: "<<w<<" pdf: "<<pdf<<"\n";
+                double a_0 = 0;
                 sp.w_sum += w;
-                sp.n++;
+                sp.n += 1;
                 sp.fourier_coefficients[0].first += w * solution;
+                a_0 = sp.fourier_coefficients[0].first/sp.w_sum;
+                double c0 = std::cos(theta2);
+                double s0 = std::sin(theta2);
+                double c1 = c0*w;
+                double s1 = s0*w;
                 for (int l = 1; l <= 10; l++)
                 {
-                    double c = std::cos(l * theta2);
-                    double s = std::sin(l * theta2);
-                    sp.fourier_coefficients[l].first += w * solution * c;
-                    sp.fourier_coefficients[l].second += w * solution * s;
+                    //std::tie(c1,s1) = std::make_pair(c1*c0 - s1*s0,c1*s0 + s1*c0);
+                    double c = c1*c0 - s1*s0;
+                    double s = c1*s0 + s1*c0;
+                    c1 = c;
+                    s1 = s;
+                    sp.fourier_coefficients[l].first +=  (solution - a_0) * c;
+                    sp.fourier_coefficients[l].second += ( solution - a_0) * s;
                 }
 
                 //spheres_[i3].boundary_samples.emplace_back(theta2,solution);
@@ -97,11 +111,13 @@ void WoP_solver::precompute(std::vector<std::pair<double, double>> poi)
     std::cout<<"finish2";
     for (auto &it : spheres_)
     {
+
         for (auto& [ a, b]: it.fourier_coefficients)
         {
             a /= it.w_sum;
             b /= it.w_sum;
         }
+        it.fourier_coefficients[0].second = -1;
     }
 
 }
@@ -174,25 +190,20 @@ void WoP_solver::computeProbes(std::vector<std::pair<double, double>> poi)
             const double min[2] = {x - r*a_walk,y - r*a_walk};
             const double max[2] = {x + r*a_walk,y + r*a_walk};
 
-            std::vector<int> remove_index;
             poi_rtree.Search(min,max,[&](int t){
                 auto& [x2,y2,w2] = poi_rand[t];
 
+                if (w2 >= w_min_)
+                {
+                    return true;
+                }
                 if (double r_2 = Eigen::Vector2d{x - x2,y - y2} .norm();r_2< r * this->a_walk)
                 {
                     w2 += getW(r_2/r);
-                    if (w2 >= w_min_)
-                    {
-                        remove_index.push_back(t);
-                    }
                 }
                 return true;
             });
 
-            for (auto t: remove_index)
-            {
-                poi_rtree.Remove(t);
-            }
         }
     }
 }

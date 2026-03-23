@@ -5,7 +5,9 @@
 #ifndef USTC_CG_2025_FRAMEWORK2D_UTIL_H
 #define USTC_CG_2025_FRAMEWORK2D_UTIL_H
 #include <cmath>
+#include <iostream>
 #include <Eigen/Dense>
+#define __cpp_lib_math_constants 201907L
 namespace USTC_CG {
 using ::std::exp;
 using ::std::sqrt;
@@ -54,4 +56,19 @@ double Ball_Green_Func(Eigen::Vector<double,DIM> x,Eigen::Vector<double,DIM> y,E
     return 0; ///TODO
 }
 }
+
+template<typename Func>
+void testTime(const char* name,Func func)
+{
+    auto start = std::chrono::high_resolution_clock::now();
+    func();
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::cout <<name << "耗时: " << duration.count() << " ms\n";
+}
+
+#define TIME_TEST_BEGIN(name) testTime(name,[&](){
+
+
+#define TIME_TEST_END });
 #endif //USTC_CG_2025_FRAMEWORK2D_UTIL_H

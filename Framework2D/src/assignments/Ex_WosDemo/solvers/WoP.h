@@ -11,7 +11,7 @@ namespace USTC_CG {
 class WoP_solver : public HC_solver{
 
     //行走系数
-    double a_walk = 0.7;
+    double a_walk = 0.6;
 
     struct WalkData
     {
