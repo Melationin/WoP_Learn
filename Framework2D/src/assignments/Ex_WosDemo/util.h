@@ -6,6 +6,7 @@
 #define USTC_CG_2025_FRAMEWORK2D_UTIL_H
 #include <cmath>
 #include <Eigen/Dense>
+#include <iostream>
 namespace USTC_CG {
 using ::std::exp;
 using ::std::sqrt;
@@ -53,5 +54,31 @@ double Ball_Green_Func(Eigen::Vector<double,DIM> x,Eigen::Vector<double,DIM> y,E
     }
     return 0; ///TODO
 }
+
+class Counter {
+    const char * name_;
+    int count_ = 0;
+    std::ostream& out_;
+public:
+    explicit Counter(const char* name,std::ostream& out = std::cout):name_(name),out_(out){}
+    ~Counter()
+    {
+        out_<<name_<<": count = "<<count_<<"\n";
+    }
+    void increment()
+    {
+        count_++;
+    }
+
+    void operator++()
+    {
+        increment();
+    }
+
+    void operator++(int)
+    {
+        increment();
+    };
+};
 }
 #endif //USTC_CG_2025_FRAMEWORK2D_UTIL_H

@@ -5,9 +5,14 @@
 #include "rect.h"
 #include <algorithm>
 
+#include "util.h"
+
 namespace USTC_CG {
+static Counter distance_to_boundary_count{"distance_to_boundary"};
 std::pair<double, double> Rect::distance_to_boundary(double x, double y)
 {
+
+    distance_to_boundary_count++;
     if (x1 <= x && x <= x2 && y1 <= y && y <= y2)
     {
         double dx = std::min(x - x1, x2 - x);

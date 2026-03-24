@@ -16,7 +16,8 @@ file(GLOB source
   "${CMAKE_CURRENT_SOURCE_DIR}/demo_window.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/demo_window.h"
 )
-add_executable(${PROJECT_NAME} ${source})
+add_executable(${PROJECT_NAME} ${source}
+        ../assignments/Ex_WosDemo/PDEWindows.h)
 set_target_properties(${PROJECT_NAME} PROPERTIES 
   DEBUG_POSTFIX "_d"
   RUNTIME_OUTPUT_DIRECTORY "${BINARY_DIR}"

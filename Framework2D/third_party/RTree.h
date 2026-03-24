@@ -108,6 +108,9 @@ public:
   /// \return Returns the number of entries found
   int Search(const ELEMTYPE a_min[NUMDIMS], const ELEMTYPE a_max[NUMDIMS], std::function<bool (const DATATYPE&)> callback) const;
 
+
+  template<typename Func>
+  int Search(const ELEMTYPE a_min[NUMDIMS], const ELEMTYPE a_max[NUMDIMS], Func&& callback) const;
   /// Find the nearest neighbors
   /// \param a_min Min of search bounding rect
   /// \param a_max Max of search bounding rect
@@ -377,7 +380,10 @@ protected:
   bool Overlap(Rect* a_rectA, Rect* a_rectB) const;
   ELEMTYPE SquareDistance(Rect const& a_rectA, Rect const& a_rectB) const;
   void ReInsert(Node* a_node, ListNode** a_listNode);
-  bool Search(Node* a_node, Rect* a_rect, int& a_foundCount, std::function<bool (const DATATYPE&)> callback) const;
+  template<typename Func>
+  bool Search(Node* a_node, Rect* a_rect, int& a_foundCount, Func&& callback) const;
+
+
   void RemoveAllRec(Node* a_node);
   void Reset();
   void CountRec(Node* a_node, int& a_count);
@@ -598,6 +604,32 @@ int RTREE_QUAL::Search(const ELEMTYPE a_min[NUMDIMS], const ELEMTYPE a_max[NUMDI
   return foundCount;
 }
 
+RTREE_TEMPLATE
+template<typename Func>
+int RTREE_QUAL::Search(const ELEMTYPE a_min[NUMDIMS], const ELEMTYPE a_max[NUMDIMS], Func&& callback) const
+{
+#ifdef _DEBUG
+  for(int index=0; index<NUMDIMS; ++index)
+  {
+    RTREE_ASSERT(a_min[index] <= a_max[index]);
+  }
+#endif //_DEBUG
+
+  Rect rect;
+
+  for(int axis=0; axis<NUMDIMS; ++axis)
+  {
+    rect.m_min[axis] = a_min[axis];
+    rect.m_max[axis] = a_max[axis];
+  }
+
+  // NOTE: May want to return search result another way, perhaps returning the number of found elements here.
+
+  int foundCount = 0;
+  Search(m_root, &rect, foundCount, callback);
+
+  return foundCount;
+}
 RTREE_TEMPLATE
 size_t RTREE_QUAL::NNSearch(
     const ELEMTYPE a_min[NUMDIMS], const ELEMTYPE a_max[NUMDIMS],
@@ -1746,7 +1778,8 @@ void RTREE_QUAL::ReInsert(Node* a_node, ListNode** a_listNode)
 
 // Search in an index tree or subtree for all data retangles that overlap the argument rectangle.
 RTREE_TEMPLATE
-bool RTREE_QUAL::Search(Node* a_node, Rect* a_rect, int& a_foundCount, std::function<bool (const DATATYPE&)> callback) const
+template<typename Func>
+bool RTREE_QUAL::Search(Node* a_node, Rect* a_rect, int& a_foundCount,  Func&& callback) const
 {
   RTREE_ASSERT(a_node);
   RTREE_ASSERT(a_node->m_level >= 0);
@@ -1776,10 +1809,18 @@ bool RTREE_QUAL::Search(Node* a_node, Rect* a_rect, int& a_foundCount, std::func
       {
         DATATYPE& id = a_node->m_branch[index].m_data;
         ++a_foundCount;
-
-          if(callback && !callback(id))
+          if constexpr (std::is_convertible_v<Func, bool>)
           {
-            return false; // Don't continue searching
+            if(callback && !callback(id))
+            {
+              return false; // Don't continue searching
+            }
+          }else
+          {
+            if(!callback(id))
+            {
+              return false; // Don't continue searching
+            }
           }
       }
     }

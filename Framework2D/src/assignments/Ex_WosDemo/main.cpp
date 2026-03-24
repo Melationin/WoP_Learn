@@ -8,81 +8,75 @@
 #include <solvers/WoP.h>
 #include <iostream>
 
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
 #include "util.h"
 
 
-
-
-#include  "Reference_widget.h"
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <vector>
 #include <cmath>
 #include <iostream>
 
-
-
+#include "PDEWindows.h"
 
 
 using namespace USTC_CG;
 int main()
 {
     // ===== 1. 初始化 GLFW =====
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-
-    GLFWwindow* window = glfwCreateWindow(1000, 800, "PDE Viewer", nullptr, nullptr);
-    glfwMakeContextCurrent(window);
-
-    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-
-    // ===== 2. 初始化 ImGui =====
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 330");
 
     int W = 256, H = 256;
-    PDEWidget widget(W, H);
+
 
 
     std::vector<float> u_ref(W * H);
     std::vector<float> u_sol(W * H);
 
-
     auto b = [](double x,double y) {
         //return x* y* sin(x)* cos(y);
+        static Counter counter{"boundary"};
+        counter.increment();
         return x*x-y*y +x*y;
     };
     auto f = [](double x,double y) {
         return 2 *( y *cos(x)* cos(y) - x *sin(x)* sin(y) - x* y* sin(x)* cos(y) );
     };
     auto rect = std::make_shared<Rect>(-2,2,-2,2);
-    WoP_solver solver{50,1e-5,0.9,rect};
 
-    //HC_solver solver{20,1e-5,0.9,rect,100};
+    /*
+    boundary: count = 100 9186
+distance_to_boundary: count = 1376 9902
+search_HC: count = 0
+search: count = 662 1521
+     */
+    WoP_solver solver{1,1e-4,0.9,rect};
+
+    //HC 边缘计算次数：359349
+
+    /*
+    boundary: count = 299 2016
+distance_to_boundary: count = 3726 0599
+search_HC: count = 64516
+search: count = 0
+     */
+    //HC_solver solver{1,1e-4,0.9,rect,100};
 
     //WosStableSolver2D solver(rect,20,1e-5);
     solver.set_boundary_condition(b);
     //solver.set_source_function(f);
 
-    std::cout << omp_get_max_threads();
+   // std::cout << omp_get_max_threads();
 
     std::vector<std::tuple<double,double,int>> poi;
     std::vector<std::pair<double,double>> poi2;
-    for (int y = 1; y < H; y++)
+
+    for (int y = 10; y < H-10; y++)
     {
-        for (int x = 1; x < W; x++)
+        for (int x = 10; x < W-10; x++)
         {
             auto [fx,fy] = rect->getPos(x,y,W,H);
 
             u_ref[y * W + x] = b(fx,fy);
 
-            poi.push_back({fx ,fy,y * W + x});
+            poi.emplace_back(fx ,fy,y * W + x);
             poi2.emplace_back(fx ,fy );
         }
         //std::cout<<"r"<<std::endl;
@@ -91,9 +85,6 @@ int main()
     auto start = std::chrono::high_resolution_clock::now();
 
     solver.precompute(poi2);
-   // solver2.precompute(poi2);
-   // std::cout<<"precompute done\n"<<"size: "<<solver2.getSize()<<std::endl;
-
 
     std::shuffle(poi.begin(),poi.end(),std::mt19937{std::random_device{}()});
     for (auto [fx,fy,index]:poi)
@@ -104,49 +95,13 @@ int main()
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     std::cout << "耗时: " << duration.count() << " ms\n";
+    PDEWindows windows{W,H};
+    windows.init(W,H);
 
-    widget.setReference(u_ref);
-    widget.setSolution(u_sol);
-    ImGuiIO& io = ImGui::GetIO();
-    io.Fonts->Clear();  // 清除默认字体
+    windows.set_reference(u_ref);
+    windows.set_solution(u_sol);
 
-    ImFontConfig cfg;
-    cfg.SizePixels = 20.0f;  // 调整成你想要的字号
-    io.Fonts->AddFontDefault(&cfg);
-    // ===== 5. 主循环 =====
-    while (!glfwWindowShouldClose(window))
-    {
-        glfwPollEvents();
-
-        // ImGui begin
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        // ⭐ 核心：画你的 PDE Widget
-        widget.draw();
-
-        // ImGui end
-        ImGui::Render();
-
-        int w, h;
-        glfwGetFramebufferSize(window, &w, &h);
-        glViewport(0, 0, w, h);
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        glfwSwapBuffers(window);
-    }
-
-    // ===== 6. 清理 =====
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-
-    glfwDestroyWindow(window);
-    glfwTerminate();
+    windows.run();
 
     return 0;
 }

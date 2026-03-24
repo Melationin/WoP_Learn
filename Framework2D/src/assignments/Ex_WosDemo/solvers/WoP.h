@@ -11,7 +11,8 @@ namespace USTC_CG {
 class WoP_solver : public HC_solver{
 
     //行走系数
-    double a_walk = 0.7;
+    double a_walk = 0.6
+    ;
 
     struct WalkData
     {
@@ -26,8 +27,8 @@ class WoP_solver : public HC_solver{
 public:
 
 
-    WoP_solver(int N, double epsilon, double k_re,std::shared_ptr<Shape> shape)
-            : HC_solver(N, epsilon, k_re, std::move(shape))
+    WoP_solver(int N, double epsilon, double k_re,std::shared_ptr<Shape> shape,double lambda = 4000)
+            : HC_solver(N, epsilon, k_re, std::move(shape),100,lambda)
     {
         w_min_ = 1;
 
@@ -45,7 +46,7 @@ public:
     void computeProbes(std::vector<std::pair<double, double>> poi);
 
     //返回 一次采样后的位置和角度和pdf
-    std::tuple<Vector2d,double,double> sample_poisson_kernel(Vector2d x, Vector2d c, float R) {
+    std::tuple<Vector2d,double,double> sample_poisson_kernel(const Vector2d &x, const Vector2d &c, float R) {
         Vector2d d = x - c;
         double r = d.norm();
 
@@ -58,13 +59,13 @@ public:
         }
 
 
-        double rho = r / R;
-        double phi = std::atan2(d.y(), d.x());
+        const double rho = r / R;
+        const double phi = std::atan2(d.y(), d.x());
 
-        double u = dist_(rand_);
+        const double u = dist_(rand_);
 
-        double t = std::tan(pi * (u - 0.5));
-        double factor = (1 - rho) / (1 + rho);
+        const double t = std::tan(pi * (u - 0.5));
+        const double factor = (1 - rho) / (1 + rho);
 
         double theta = phi + 2 * std::atan(factor * t);
 

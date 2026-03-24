@@ -19,6 +19,8 @@ public:
         createTexture(errTex);
     }
 
+    PDEWidget() = default;
+
     ~PDEWidget()
     {
         glDeleteTextures(1, &refTex);
@@ -73,7 +75,7 @@ public:
     }
 
 private:
-    int width, height;
+    int width{}, height{};
 
     std::vector<float> ref, sol, err;
 

@@ -19,34 +19,17 @@ struct Sphere {
     Eigen::Vector2d pos;
     double r;
     double w_sum = 0; //
-    double w_sum_cv = 0; //
     int n = 0;
-    std::vector<std::pair<double,double>> boundary_samples; // 存储边界采样点坐标，例如 [(theta1,value), ...]
     std::array<std::pair<double,double>,L+1> fourier_coefficients; // 存储傅里叶系数，例如 [(a0,b0), (a1,b1), ...]
+
+    //存储球边界上采样的点的角度和对应的值，后面可以用来重建源项,用于优化游走
+    std::vector<int> neighbors;
+    RTree<int,double,2> neighbor_tree; // 存储邻接球的rtree
+
 
     Sphere(double x,double y, double r):pos(x,y),r(r){};
 
     Sphere(const Eigen::Vector2d& pos, double r):pos(pos),r(r){};
-
-
-    void get_fourier_coefficients(){
-        for (int i = 0;i<L+1;i++)
-        {
-            double a = 0;
-            double b = 0;
-
-            for ( auto [t,v]: boundary_samples)
-            {
-                // 2D时， p(theta)*2pi = 1;
-                a += v * std::cos(i*t);
-                b += v * std::sin(i*t);
-            }
-            a /= boundary_samples.size();
-            b /= boundary_samples.size();
-            fourier_coefficients[i] = {a,b};
-        }
-    }
-
 
     double get_value(double theta, double r)
     {
@@ -70,14 +53,13 @@ public:
     RTree<int, double, 2> tree;
     std::vector<Sphere<10>>& spheres_;
 
-    RTree2D(std::vector<Sphere<10>>& spheres):spheres_(spheres){}
-    void insert(int index_) {
+    explicit RTree2D( std::vector<Sphere<10>>& spheres):spheres_(spheres){}
+    void insert(int index_,double k = 1) {
         auto& sphere = spheres_[index_];
-        double min[2] = {sphere.pos.x() - sphere.r, sphere.pos.y() - sphere.r};
-        double max[2] = {sphere.pos.x() + sphere.r, sphere.pos.y() + sphere.r};
+        double min[2] = {sphere.pos.x() - sphere.r*k, sphere.pos.y() - sphere.r*k};
+        double max[2] = {sphere.pos.x() + sphere.r*k, sphere.pos.y() + sphere.r*k};
         tree.Insert( min, max,index_);
     }
-
 
     void search(Eigen::Vector2d pos, std::vector<int>& results,double k) {
         double min[2] = {pos.x(), pos.y()};
@@ -101,8 +83,8 @@ public:
     HC_solver(int N, double epsilon, double k_re,std::shared_ptr<Shape> shape)
     : WosStableSolver2D(std::move(shape),N,epsilon),a_rec_(k_re),rtree_(spheres_)
     {}
-    HC_solver(int N, double epsilon, double k_re,std::shared_ptr<Shape> shape,int K2)
-       : WosStableSolver2D(std::move(shape),N,epsilon),a_rec_(k_re),rtree_(spheres_),K2_(K2)
+    HC_solver(int N, double epsilon, double k_re,std::shared_ptr<Shape> shape,int K2,double lambda = 4000*9)
+       : WosStableSolver2D(std::move(shape),N,epsilon),a_rec_(k_re),rtree_(spheres_),K2_(K2),lambda(lambda)
     {}
     void clear(){spheres_.clear();rtree_.tree.RemoveAll();}
 
@@ -129,9 +111,9 @@ protected:
     }
 
     //表示每个球边界上要采样多少个点，N_i = lambda * r_i^(d-1) 上取整
-    double lambda = 50;
 
-    int N_min = 32;
+
+    int N_min = 12;
 
     int N(double r)
     {
@@ -143,7 +125,7 @@ protected:
 
     //重建源项采样数量
     int K2_ = 100;
-
+    double lambda = 4000;
 };
 } // USTC_CG
 

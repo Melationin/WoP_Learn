@@ -32,6 +32,7 @@ double WosStableSolver2D::solve(double x, double y)
         double source = 0;
         while (true)
         {
+
             auto [bx,by] = shape->distance_to_boundary(x2,y2);
             double r = (bx - x2)*(bx-x2) + (by - y2)*(by - y2);
             if (r < epsilon_*epsilon_)

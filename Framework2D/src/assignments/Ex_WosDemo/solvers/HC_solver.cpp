@@ -5,6 +5,7 @@
 #include "HC_solver.h"
 
 namespace USTC_CG {
+static Counter search_count{"search_HC"};
 void HC_solver::precompute(std::vector<std::pair<double, double>> poi)
 {
 }
@@ -12,6 +13,7 @@ void HC_solver::precompute(std::vector<std::pair<double, double>> poi)
 double HC_solver::solve(double x, double y)
 {
     std::vector<int> results;
+    search_count++;
     rtree_.search({x,y},results,a_rec_);
 
     double w_sum  = 0;
@@ -36,10 +38,35 @@ double HC_solver::solve(double x, double y)
         for (int i = 0; i < n; i++)
         {
             double sample = WosStableSolver2D::solve(x + r*cos(theta) , y + r*sin(theta));
-            now_sphere.boundary_samples.emplace_back(theta, sample);
+            auto& sp = now_sphere;
+            sp.w_sum += 1;
+            sp.n++;
+            sp.fourier_coefficients[0].first += sample;
+            const double a_0 = sp.fourier_coefficients[0].first / sp.w_sum;
+            const double c1 = std::cos(theta);
+            const double s1 = std::sin(theta);
+
+            double cn = c1 ;
+            double sn = s1 ;
+
+            for (int l = 1; l <= 10; l++)
+            {
+                sp.fourier_coefficients[l].first +=  (sample) * cn;
+                sp.fourier_coefficients[l].second +=  (sample) * sn;
+                double cn_1  =  cn * c1 - sn * s1;
+                double sn_1 = cn * s1 + sn * c1;
+                cn = cn_1;
+                sn = sn_1;
+            }
             theta += d_theta;
         }
-        now_sphere.get_fourier_coefficients();
+
+        for (auto& [ a, b]: now_sphere.fourier_coefficients)
+        {
+            a /= now_sphere.w_sum;
+            b /= now_sphere.w_sum;
+        }
+       // now_sphere.get_fourier_coefficients();
         results.push_back(spheres_.size()-1);
         w_sum += getW(0);
     }
