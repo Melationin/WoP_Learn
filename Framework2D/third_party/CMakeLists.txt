@@ -1,4 +1,5 @@
 # glfw
+set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
 add_subdirectory(glfw)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -37,3 +38,17 @@ target_include_directories(imgui
 )
 target_link_libraries(imgui PUBLIC glfw)
 set_target_properties(imgui PROPERTIES FOLDER "third_party")
+
+# glew
+
+
+# nanovg
+find_package(OpenGL REQUIRED)
+set(nanovg_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/nanovg" CACHE STRING "")
+add_library(nanovg "${nanovg_SOURCE_DIR}/src/nanovg.c")
+target_include_directories(nanovg
+    PUBLIC "${nanovg_SOURCE_DIR}/src"
+)
+target_compile_definitions(nanovg PUBLIC NANOVG_GL3)
+target_link_libraries(nanovg PUBLIC OpenGL::GL)
+set_target_properties(nanovg PROPERTIES FOLDER "third_party")

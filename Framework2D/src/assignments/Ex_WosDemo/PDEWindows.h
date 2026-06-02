@@ -19,7 +19,7 @@ class PDEWindows {
     GLFWwindow* window = nullptr;
 public:
 
-    PDEWindows(int w,int h){};
+    PDEWindows(){};
     ~PDEWindows()
     {
         ImGui_ImplOpenGL3_Shutdown();
@@ -35,7 +35,7 @@ public:
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
-        window  = glfwCreateWindow(1000, 800, "PDE Viewer", nullptr, nullptr);
+        window  = glfwCreateWindow(1000, 1000, "PDE Viewer", nullptr, nullptr);
         glfwMakeContextCurrent(window);
 
         gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress));

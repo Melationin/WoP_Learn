@@ -2,62 +2,56 @@
 // Created by zhdds on 2026/3/19.
 //
 
-#include "stableWos.h"
 
 
 #include <iostream>
 #include "util.h"
+#include  "stableWos.h"
 namespace USTC_CG {
 
-
-
-void WosStableSolver2D::precompute(std::vector<std::pair<double, double>> poi)
+void WosStableSolver2D::precompute(std::vector<std::pair<float, float>>)
 {
-    rand_ = std::minstd_rand{std::random_device{}()};
+
 }
 
-double WosStableSolver2D::solve(double x, double y)
+float WosStableSolver2D::solve(float x, float y)
 {
 
-    std::uniform_real_distribution<double> dist{0,1};
-    double sum = 0;
+    float sum = 0;
     int i{};
     int K = has_source?1:0;
 
     for (i = 0; i < N_; ++i)
     {
-        int n =0;
-        double x2 = x;
-        double y2 = y;
-        double source = 0;
+        Vector2f walk_point = {x,y};
+        float source = 0;
+
         while (true)
         {
-
-            auto [bx,by] = shape->distance_to_boundary(x2,y2);
-            double r = (bx - x2)*(bx-x2) + (by - y2)*(by - y2);
-            if (r < epsilon_*epsilon_)
+            //distance_to_boundary_WoS++;
+            auto [r,d] = shape->distance_to_boundaryAndDC(walk_point);
+            if (r < epsilon_)
             {
-                sum += boundary(bx,by) - source;
+                sum += d - source;
                 break;
             }
-            r = sqrt(r);
             for (int k = 0; k < K; k++)
             {
-                double source_r =std::sqrt(dist(rand_))*r;
-                double source_arg = dist(rand_)*2*pi;
-                source += f(source_r*cos(source_arg) + x2,source_r*sin(source_arg) + y2)*r*r/4/K;
+                float source_r =std::sqrt(randFloat())*r;
+                float source_arg = randFloat()*2*pi;
+                const Eigen::Vector2f source_p = shape->walkUncheck(walk_point,source_arg,source_r);
+                if (source_r > 1e-6f) source += shape->source(source_p) *((r * r / 2.0f) * std::log(r / source_r))/K;
+                //source += f(source_r*cos(source_arg) + x2,source_r*sin(source_arg) + y2)*r*r/4/K;
             }
-            double b_arg = dist(rand_)*2*pi;
-
-            x2 += r*std::cos(b_arg);
-            y2 += r*std::sin(b_arg);
+            float b_arg = randFloat()*2*pi;
+            walk_point = shape->walkUncheck(  walk_point,b_arg,r);
         }
-        //solveInfo_.walk_count += 1;
-        //solveInfo_.walk_range_sum += n;
-        //std::cout<< boundary(bx,by)<<"\n";
     }
     //solveInfo_.solve_point_count++;
 
+    //std::cout<<sum/N_<<" ";
     return sum/N_;
 }
+
+
 }

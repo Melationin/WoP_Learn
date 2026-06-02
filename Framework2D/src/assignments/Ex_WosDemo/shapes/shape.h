@@ -20,42 +20,21 @@ class Shape
    public:
     virtual ~Shape() = default;
 
-    /**
-     * Draws the shape on the screen.
-     * This is a pure virtual function that must be implemented by all derived
-     * classes.
-     *
-     * @param config The configuration settings for drawing, including line
-     * color, thickness, and bias.
-     *               - line_color defines the color of the shape's outline.
-     *               - line_thickness determines how thick the outline will be.
-     *               - bias is used to adjust the shape's position on the
-     * screen.
-     */
-    virtual void draw(const Config& config) const = 0;
-    /**
-     * Updates the state of the shape.
-     * This function allows for dynamic modification of the shape, in response
-     * to user interactions like dragging.
-     *
-     * @param x, y Dragging point. e.g. end point of a line.
-     */
-    virtual void update(float x, float y) = 0;
-    /**
-     * Adds a control point to the shape.
-     * This function is used to add control points to the shape, which can be
-     * used to modify the shape's appearance.
-     *
-     * @param x, y Control point to be added. e.g. vertex of a polygon.
-     */
-    virtual void add_control_point(float x, float y) {}
+
+    virtual void draw(const Config&) const{};
 
 
-    virtual  std::pair<int,int> getCoord(double x,double y,int w,int h) = 0;
-    virtual   std::pair<double,double> getPos(int x, int y, int w, int h) = 0;
-    virtual std::vector<std::pair<int, int>> get_interior_pixels() const = 0;
+    virtual void update(float x, float y){};
+
+    virtual void add_control_point(float , float ) {}
+
+
+    virtual  std::pair<int,int> getCoord(float x,float y,int w,int h) = 0;
+    virtual   std::pair<float,float> getPos(int x, int y, int w, int h) = 0;
+    virtual bool interior(float x, float y) = 0;
+
 
     //正数表示内部，负数表示外面
-    virtual std::pair<double,double> distance_to_boundary(double x, double y) = 0;
+    virtual std::pair<float,float> distance_to_boundary(float x, float y) = 0;
 };
 }  // namespace USTC_CG

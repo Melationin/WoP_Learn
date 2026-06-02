@@ -15,7 +15,14 @@ add_executable(${PROJECT_NAME} ${source}
         solvers/HC_solver.h
         Reference_widget.h
         solvers/WoP.cpp
-        solvers/WoP.h)
+        solvers/WoP.h
+        shapes/polygon.h
+        main2.cpp
+        shapes/line.h
+        main3.cpp
+        util/thread_pool.h
+        Scene.h
+)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 set_target_properties(${PROJECT_NAME} PROPERTIES 
@@ -26,5 +33,9 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 target_link_libraries(${PROJECT_NAME} PUBLIC common)
 
 find_package(OpenMP REQUIRED)
+
+find_package(GLEW REQUIRED)
+target_link_libraries(Ex_WosDemo PRIVATE GLEW::glew)
+
 
 target_link_libraries(Ex_WosDemo PRIVATE OpenMP::OpenMP_CXX)

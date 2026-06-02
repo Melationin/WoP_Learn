@@ -51,7 +51,7 @@ public:
 
 
         //io.DisplayFramebufferScale = ImVec2(2.0f, 2.0f);
-        ImGui::SetNextWindowSize(ImVec2(width *2+ 100, height*2 + 100));
+        ImGui::SetNextWindowSize(ImVec2(width *2+ 200, height*2 + 200));
         ImGui::Begin("PDE Viewer");
 
         ImGui::Text("Error L2: %.6f", l2_error);
@@ -81,7 +81,7 @@ private:
 
     GLuint refTex = 0, solTex = 0, errTex = 0;
 
-    int mode = 0;
+    int mode = 1;
 
     float l2_error = 0.0f;
     float linf_error = 0.0f;
@@ -170,6 +170,8 @@ private:
 
     static void colormap_turbo(float t, float& r, float& g, float& b)
     {
+        r = g = b = std::clamp(t, 0.0f, 1.0f);
+        //return;
         const float a[] = {0.1357f, 4.6154f, -42.6603f, 132.1311f, -152.9424f, 59.2864f};
         const float b_[] = {0.0914f, 2.1942f, 4.8429f, -14.1850f, 4.2773f, 2.8296f};
         const float c[] = {0.1067f, 12.6419f, -60.5820f, 110.3627f, -89.9031f, 27.3482f};

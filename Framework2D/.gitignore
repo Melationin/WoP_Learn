@@ -3,3 +3,5 @@ bin/
 libs/
 .vscode
 imgui.ini
+/src/assignments/Ex_WosDemo/cmake-build-release/
+/src/assignments/Ex_WosDemo/cmake-build-debug/
